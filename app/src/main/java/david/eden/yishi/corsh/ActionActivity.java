@@ -1,9 +1,16 @@
 package david.eden.yishi.corsh;
 
+import android.annotation.TargetApi;
 import android.bluetooth.BluetoothDevice;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Environment;
 import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -23,6 +30,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
+import static android.Manifest.permission.READ_EXTERNAL_STORAGE;
+import static android.Manifest.permission.WRITE_EXTERNAL_STORAGE;
+
 public class ActionActivity extends AppCompatActivity implements BlueteraCallbacks, View.OnClickListener {
 
     private BlueteraManager mBlueteraManager;
@@ -41,6 +51,18 @@ public class ActionActivity extends AppCompatActivity implements BlueteraCallbac
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_action);
+
+        if (!checkPermission()) {
+
+        } else {
+            if (checkPermission()) {
+                requestPermissionAndContinue();
+
+            } else {
+
+            }
+        }
+
         btn1 = (Button)findViewById(R.id.btn1);
         btn2 = (Button)findViewById(R.id.btn2);
         btn3 = (Button)findViewById(R.id.btn3);
@@ -186,19 +208,8 @@ public class ActionActivity extends AppCompatActivity implements BlueteraCallbac
     @Override
     public void onClick(View v) {
         if (v == btn7) {
+            save();
 
-                 str = this.data;
-
-                 File file = new File(Environment.DIRECTORY_DOWNLOADS,"cycare.txt");
-            try {
-                FileOutputStream fos = new FileOutputStream(file);
-                fos.write(str.getBytes());
-                fos.close();
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
         }
         else if(v==btn1){
             writedata(btn1);
@@ -219,5 +230,61 @@ public class ActionActivity extends AppCompatActivity implements BlueteraCallbac
             writedata(btn6);
         }
 
+    }
+
+    private static final int PERMISSION_REQUEST_CODE = 200;
+    private boolean checkPermission() {
+
+        return ContextCompat.checkSelfPermission(this, WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED
+                && ContextCompat.checkSelfPermission(this, READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED
+                ;
+    }
+
+    private void requestPermissionAndContinue() {
+        if (ContextCompat.checkSelfPermission(this, WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED
+                && ContextCompat.checkSelfPermission(this, READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+
+            if (ActivityCompat.shouldShowRequestPermissionRationale(this, WRITE_EXTERNAL_STORAGE)
+                    && ActivityCompat.shouldShowRequestPermissionRationale(this, READ_EXTERNAL_STORAGE)) {
+                AlertDialog.Builder alertBuilder = new AlertDialog.Builder(this);
+                alertBuilder.setCancelable(true);
+                alertBuilder.setTitle(getString(R.string.permission_necessary));
+                alertBuilder.setMessage(R.string.storage_permission_is_encessary_to_wrote_event);
+                alertBuilder.setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                    @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
+                    public void onClick(DialogInterface dialog, int which) {
+                        ActivityCompat.requestPermissions(ActionActivity.this, new String[]{WRITE_EXTERNAL_STORAGE
+                                , READ_EXTERNAL_STORAGE}, PERMISSION_REQUEST_CODE);
+                    }
+                });
+                AlertDialog alert = alertBuilder.create();
+                alert.show();
+                Log.e("", "permission denied, show dialog");
+            } else {
+                ActivityCompat.requestPermissions(ActionActivity.this, new String[]{WRITE_EXTERNAL_STORAGE,
+                        READ_EXTERNAL_STORAGE}, PERMISSION_REQUEST_CODE);
+            }
+        } else {
+            //openActivity();
+        }
+    }
+
+    public void save(){
+        str = this.data;
+        String root = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).toString();
+        File file = new File(root + "/saved_images");
+        file.mkdirs();
+        File file2 = new File (file, "cycare2.txt");
+        if (file.exists ())
+            file.delete ();
+        try {
+            FileOutputStream fos = new FileOutputStream(file2);
+            fos.write(str.getBytes());
+            fos.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }
