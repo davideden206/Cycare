@@ -41,8 +41,8 @@ public class ActionActivity extends AppCompatActivity implements BlueteraCallbac
     private Button mDisconnectButton;
     private Button btn1 ,btn2,btn3,btn4,btn5,btn6,btn7;
     private String data;
-    private Quaternion CurentQuaternion;
-    private Vector3D Accelerometer;
+    static Quaternion CurentQuaternion;
+    static Vector3D Accelerometer;
     FileOutputStream out;
     InputStream in;
     String str;
@@ -96,12 +96,29 @@ public class ActionActivity extends AppCompatActivity implements BlueteraCallbac
 
 
     public void writedata(Button btn){
-        for (int i = 0;i<50;i++){
-            data+="\n"+btn.getText()+"Quaternion: W = "+String.valueOf(CurentQuaternion.getW())+" X = "+String.valueOf(CurentQuaternion.getX())
-                    +" Y = "+String.valueOf(CurentQuaternion.getY())+" Z = "+String.valueOf(CurentQuaternion.getZ())+
-                    " Accelerometer: X = "+String.valueOf(Accelerometer.getX())+" Y = "+String.valueOf(Accelerometer.getY())+" Z = "+String.valueOf(Accelerometer.getZ());
+        data+=btn.getText()+"\n  W(Q)\t X(Q) \t Y(Q) \t Z(Q) \t X(A) \t Y(A) \t Z(A) ";
+        for (int i = 0;i<50;i++) {
         }
+            writerow();
+        writerow();
+        writerow();
+        writerow();
+        writerow();
+        writerow();
+        writerow();
+        writerow();
+        writerow();
+
+
         Toast.makeText(this, "סיים", Toast.LENGTH_SHORT).show();
+    }
+
+    public void writerow(){
+
+            data+="\n"+String.valueOf(CurentQuaternion.getW())+"\t"+String.valueOf(CurentQuaternion.getX())
+                    +"\t"+String.valueOf(CurentQuaternion.getY())+"\t"+String.valueOf(CurentQuaternion.getZ())+
+                    "\t"+String.valueOf(Accelerometer.getX())+"\t"+String.valueOf(Accelerometer.getY())+"\t"+String.valueOf(Accelerometer.getZ());
+
     }
 
     @Override
@@ -287,4 +304,6 @@ public class ActionActivity extends AppCompatActivity implements BlueteraCallbac
             e.printStackTrace();
         }
     }
+
+
 }
