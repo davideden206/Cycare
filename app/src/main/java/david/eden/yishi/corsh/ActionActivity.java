@@ -40,12 +40,13 @@ public class ActionActivity extends AppCompatActivity implements BlueteraCallbac
     private Button mConnectButton;
     private Button mDisconnectButton;
     private Button btn1 ,btn2,btn3,btn4,btn5,btn6,btn7;
-    private String data;
+    private String data,data1,data2;
     static Quaternion CurentQuaternion;
     static Vector3D Accelerometer;
     FileOutputStream out;
     InputStream in;
     String str;
+    boolean clickbtn =false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -96,35 +97,38 @@ public class ActionActivity extends AppCompatActivity implements BlueteraCallbac
 
 
     public void writedata(Button btn){
-        data+=btn.getText()+"\n  W(Q)\t X(Q) \t Y(Q) \t Z(Q) \t X(A) \t Y(A) \t Z(A) ";
-        for (int i = 0;i<50;i++) {
-        }
-            writerow();
-        writerow();
-        writerow();
-        writerow();
-        writerow();
-        writerow();
-        writerow();
-        writerow();
-        writerow();
+        data=btn.getText().toString();
+        str+=data;
+        clickbtn = true;
+        new Thread(new Runnable(){
+            public void run(){
+                try{
+                    synchronized (this){
+                        data1="W(Q)\t X(Q) \t Y(Q) \t Z(Q)\n";
+                        data2="X(A) \t Y(A) \t Z(A)\n";
 
+                        wait(5000);
+                        clickbtn = false;
+                        str += data1+data2;
+                        data1="";
+                        data2="";
+                    }
+                }catch (InterruptedException e){
+                    e.printStackTrace();
+                }}
+        }).start();
 
         Toast.makeText(this, "סיים", Toast.LENGTH_SHORT).show();
     }
 
-    public void writerow(){
 
-            data+="\n"+String.valueOf(CurentQuaternion.getW())+"\t"+String.valueOf(CurentQuaternion.getX())
-                    +"\t"+String.valueOf(CurentQuaternion.getY())+"\t"+String.valueOf(CurentQuaternion.getZ())+
-                    "\t"+String.valueOf(Accelerometer.getX())+"\t"+String.valueOf(Accelerometer.getY())+"\t"+String.valueOf(Accelerometer.getZ());
-
-    }
 
     @Override
     public void onAccelerometerData(BluetoothDevice bluetoothDevice, int i, Vector3D vector3D) {
+        if(clickbtn) {
 
-        this.Accelerometer = vector3D;
+            data2 += "\t" + String.valueOf(vector3D.getX()) + "\t" + String.valueOf(vector3D.getY()) + "\t" + String.valueOf(vector3D.getZ())+"\n";
+        }
     }
 
     @Override
@@ -132,7 +136,10 @@ public class ActionActivity extends AppCompatActivity implements BlueteraCallbac
         Log.i("tag", "X" + quaternion.getX());
         Log.i("tag", "Y" + quaternion.getY());
         Log.i("tag", "Z" + quaternion.getZ());
-        this.CurentQuaternion = quaternion;
+        if(clickbtn) {
+            data1 +=  String.valueOf(quaternion.getW()) + "\t" + String.valueOf(quaternion.getX())
+                    + "\t" + String.valueOf(quaternion.getY()) + "\t" + String.valueOf(quaternion.getZ())+"\n";
+        }
 
     }
 
@@ -287,7 +294,7 @@ public class ActionActivity extends AppCompatActivity implements BlueteraCallbac
     }
 
     public void save(){
-        str = this.data;
+
         String root = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).toString();
         File file = new File(root + "/saved_images");
         file.mkdirs();
@@ -304,6 +311,9 @@ public class ActionActivity extends AppCompatActivity implements BlueteraCallbac
             e.printStackTrace();
         }
     }
+
+
+
 
 
 }
