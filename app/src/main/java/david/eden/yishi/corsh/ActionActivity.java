@@ -104,7 +104,7 @@ public class ActionActivity extends AppCompatActivity implements BlueteraCallbac
             public void run(){
                 try{
                     synchronized (this){
-                        data1="W(Q)\t X(Q) \t Y(Q) \t Z(Q)\n";
+                        data1="\n W(Q)\t X(Q) \t Y(Q) \t Z(Q)\n";
                         data2="X(A) \t Y(A) \t Z(A)\n";
 
                         wait(5000);
