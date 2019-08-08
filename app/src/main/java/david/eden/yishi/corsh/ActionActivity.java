@@ -39,7 +39,7 @@ public class ActionActivity extends AppCompatActivity implements BlueteraCallbac
     private TextView mStatusTextView;
     private Button mConnectButton;
     private Button mDisconnectButton;
-    private Button btn1 ,btn2,btn3,btn4,btn5,btn6,btn7;
+    private Button btn1 ,btn2,btn3,btn4,btn5,btn6,btn7,btn8;
     private String data,data1,data2;
     static Quaternion CurentQuaternion;
     static Vector3D Accelerometer;
@@ -47,12 +47,17 @@ public class ActionActivity extends AppCompatActivity implements BlueteraCallbac
     InputStream in;
     String str;
     boolean clickbtn =false;
+    public  Quaternion invers;
+    public  Quaternion curent;
+    public static boolean flag=true;
+    static boolean enable = true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_action);
-
+        curent = new Quaternion();
+        invers = new Quaternion();
         if (!checkPermission()) {
 
         } else {
@@ -71,6 +76,7 @@ public class ActionActivity extends AppCompatActivity implements BlueteraCallbac
         btn5 = (Button)findViewById(R.id.btn5);
         btn6 = (Button)findViewById(R.id.btn6);
         btn7 = (Button)findViewById(R.id.btn7);
+        btn8 = (Button)findViewById(R.id.btn8);
 
         btn1.setOnClickListener(this);
         btn2.setOnClickListener(this);
@@ -79,6 +85,7 @@ public class ActionActivity extends AppCompatActivity implements BlueteraCallbac
         btn5.setOnClickListener(this);
         btn6.setOnClickListener(this);
         btn7.setOnClickListener(this);
+        btn8.setOnClickListener(this);
 
         mBlueteraManager = new BlueteraManager(getApplication());
         mBlueteraManager.setGattCallbacks(this);
@@ -98,7 +105,7 @@ public class ActionActivity extends AppCompatActivity implements BlueteraCallbac
 
     public void writedata(Button btn){
         data=btn.getText().toString();
-        str+=data;
+        str+="\n"+data;
         clickbtn = true;
         new Thread(new Runnable(){
             public void run(){
@@ -133,12 +140,36 @@ public class ActionActivity extends AppCompatActivity implements BlueteraCallbac
 
     @Override
     public void onQuaternionData(BluetoothDevice bluetoothDevice, int i, Quaternion quaternion) {
-        Log.i("tag", "X" + quaternion.getX());
-        Log.i("tag", "Y" + quaternion.getY());
-        Log.i("tag", "Z" + quaternion.getZ());
+
+
+        if(enable) {
+            curent = quaternion;
+            enable=false;
+        }
+        if(flag) {
+            invers = inverse(quaternion);
+            curent = mulLeft(invers,quaternion);
+            Log.i("curent", "curent X" + curent.getX());
+            Log.i("curent", "curent Y" + curent.getY());
+            Log.i("curent", "curent Z" + curent.getZ());
+            Log.i("curent", "curent W" + curent.getW());
+
+
+
+
+
+            flag=false;
+        }
+
+//doblet the curent quaternion  with the invers
+        curent = mulLeft(invers,quaternion);
+        Log.i("tag", "X" + curent.getX());
+        Log.i("tag", "Y" + curent.getY());
+        Log.i("tag", "Z" + curent.getZ());
+        Log.i("tag", "W" + curent.getZ());
         if(clickbtn) {
-            data1 +=  String.valueOf(quaternion.getW()) + "\t" + String.valueOf(quaternion.getX())
-                    + "\t" + String.valueOf(quaternion.getY()) + "\t" + String.valueOf(quaternion.getZ())+"\n";
+            data1 +=  String.valueOf(curent.getW()) + "\t" + String.valueOf(curent.getX())
+                    + "\t" + String.valueOf(curent.getY()) + "\t" + String.valueOf(curent.getZ())+"\n";
         }
 
     }
@@ -253,6 +284,10 @@ public class ActionActivity extends AppCompatActivity implements BlueteraCallbac
         else if(v==btn6){
             writedata(btn6);
         }
+        else if(v==btn8){
+            flag = true;
+            writedata(btn8);
+        }
 
     }
 
@@ -313,7 +348,37 @@ public class ActionActivity extends AppCompatActivity implements BlueteraCallbac
     }
 
 
+    public Quaternion inverse(Quaternion quaternion) {
+        flag=false;
+        float norm = norm(quaternion);
+        if (norm > 0.0) {
+            float invNorm = 1.0f / norm;
+            return new Quaternion(-quaternion.getX() * invNorm, -quaternion.getY() * invNorm, -quaternion.getZ() * invNorm, quaternion.getW()
+                    * invNorm);
+        }
 
+        // return an invalid result to flag the error
+        return null;
+    }
+
+    public float norm(Quaternion quaternion) {
+        return quaternion.getW()*quaternion.getW() + quaternion.getX()*quaternion.getX()
+                + quaternion.getY()*quaternion.getY() + quaternion.getZ()*quaternion.getZ();
+    }
+
+
+    public Quaternion mulLeft (Quaternion other,Quaternion q) {
+        Quaternion curent = new Quaternion();
+        final float newX = other.getW() * q.getX() + other.getX() * q.getW() + other.getY() * q.getZ() - other.getZ() * q.getY();
+        final float newY = other.getW() * q.getY() + other.getY() * q.getW() + other.getZ() * q.getX() - other.getX() * q.getZ();
+        final float newZ = other.getW() * q.getZ() + other.getZ() * q.getW() + other.getX() * q.getY() - other.getY() * q.getX();
+        final float newW = other.getW() * q.getW() - other.getX() * q.getX() - other.getY() * q.getY() - other.getZ() * q.getZ();
+        curent.setX(newX);
+        curent.setY(newY);
+        curent.setZ(newZ);
+        curent.setW(newW);
+        return curent;
+    }
 
 
 }
